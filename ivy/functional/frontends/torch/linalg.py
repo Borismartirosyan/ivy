@@ -5,6 +5,7 @@ import ivy.functional.frontends.torch as torch_frontend
 from ivy.functional.frontends.torch.func_wrapper import to_ivy_arrays_and_back
 from ivy.func_wrapper import with_supported_dtypes, with_unsupported_dtypes
 from collections import namedtuple
+import torch
 
 
 @to_ivy_arrays_and_back
@@ -370,3 +371,82 @@ def cholesky_ex(input, *, upper=False, check_errors=False, out=None):
             matrix = input * math.nan
             info = ivy.ones(input.shape[:-2], dtype=ivy.int32)
             return matrix, info
+
+
+def is_upper_triangular(matrix):
+    """
+    Checks if a matrix is an upper triangular matrix or not
+    Parameters
+    ----------
+    matrix
+    torch.Tensor
+
+    Returns
+    -------
+    bool : True if matrix is an upper triangular else False
+    """
+    rows, cols = matrix.shape
+    if rows != cols:
+        return False
+
+    for i in range(rows):
+        for j in range(i):
+            if matrix[i, j] != 0:
+                return False
+    return True
+
+def is_lower_triangular(matrix):
+    """
+    Checks if a matrix is an lower triangular matrix or not
+    Parameters
+    ----------
+    matrix
+    torch.Tensor
+
+    Returns
+    -------
+    bool : True if matrix is an lower triangular else False
+    """
+
+    rows, cols = matrix.shape
+    if rows != cols:
+        return False
+
+
+    for i in range(rows):
+        for j in range(i):
+            if matrix[i, j] != 0:
+                return False
+    return True
+
+
+@to_ivy_arrays_and_back
+@with_supported_dtypes(
+    {"2.0.1 and below": ("float32", "float64", "complex32", "complex64")}, "torch"
+)
+def solve_traingular(A, B):
+    is_lower_triangular_ = is_lower_triangular(A)
+    is_upper_triangular_ = is_upper_triangular(A)
+    if not is_lower_triangular_ or not is_upper_triangular_:
+        raise TypeError("Input should be a traingular matrix")
+    elif is_upper_triangular_:
+        res = torch.linalg.solve_triangular(A, B, upper=True)
+        return res
+    elif is_lower_triangular_:
+        res = torch.linalg.solve_triangular(A, B, upper=False)
+        return res
+
+    return None
+
+if __name__ == "__main__":
+    A = torch.randn(3, 3).triu_()
+    B = torch.randn(3, 4)
+    X = solve_traingular(A, B)
+    print(X)
+
+
+
+
+
+
+
