@@ -432,17 +432,9 @@ def solve_traingular(A, B):
     elif is_upper_triangular_:
         res = torch.linalg.solve_triangular(A, B, upper=True)
         return res
-    elif is_lower_triangular_:
+    else:
         res = torch.linalg.solve_triangular(A, B, upper=False)
         return res
-
-    return None
-
-if __name__ == "__main__":
-    A = torch.randn(3, 3).triu_()
-    B = torch.randn(3, 4)
-    X = solve_traingular(A, B)
-    print(X)
 
 
 
